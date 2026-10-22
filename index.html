@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Planer">
+<meta name="theme-color" content="#3b6fd4">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<title>Alltagsplaner</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f6f5f1;--card:#fff;--tx:#1f2328;--mut:#6b7280;--bd:#e4e2da;--ac:#3b6fd4;--acs:#e6eefc;--sp:#e0662f;--sps:#fdeadf;--ok:#2f9e6b}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#16181c;--card:#20242a;--tx:#eceef1;--mut:#9aa3af;--bd:#30353d;--ac:#7aa2f0;--acs:#26334d;--sp:#f08a55;--sps:#40281b;--ok:#4cc38a}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#16181c;--card:#20242a;--tx:#eceef1;--mut:#9aa3af;--bd:#30353d;--ac:#7aa2f0;--acs:#26334d;--sp:#f08a55;--sps:#40281b;--ok:#4cc38a}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;-webkit-tap-highlight-color:transparent;overscroll-behavior-y:none;-webkit-text-size-adjust:100%;background:var(--bg);color:var(--tx);font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:640px;margin:0 auto;padding:16px 14px 110px}
+h1{font-size:22px;margin:0 0 12px}
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;gap:6px;padding:8px 10px calc(8px + env(safe-area-inset-bottom,0px));background:var(--card);border-top:1px solid var(--bd)}
+.tab{flex:1;padding:12px 4px;border:0;background:transparent;color:var(--mut);border-radius:12px;font:inherit;font-weight:600}
+.tab.on{background:var(--acs);color:var(--ac)}
+.tab.sp.on{background:var(--sps);color:var(--sp)}
+.box{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:12px;margin-bottom:12px}
+.row{display:flex;gap:8px}
+input[type=text],input[type=number]{flex:1;min-width:0;padding:12px;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--tx);font:inherit}
+.btn{padding:12px 16px;border:0;border-radius:10px;background:var(--ac);color:#fff;font:inherit;font-weight:600}
+.btn.sp{background:var(--sp)}
+.btn.ghost{background:var(--acs);color:var(--ac)}
+.hint{font-size:13px;color:var(--mut);margin-top:8px;min-height:18px}
+.hint b{color:var(--tx)}
+.note{font-size:14px;margin-top:8px}
+.note.err{color:var(--sp)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.chip{padding:6px 11px;border-radius:99px;border:1px solid var(--bd);background:var(--bg);color:var(--mut);font:inherit;font-size:14px}
+.chip.on{background:var(--acs);color:var(--ac);border-color:var(--ac);font-weight:600}
+.nav{display:flex;align-items:center;justify-content:space-between;margin:4px 0 10px}
+.nav button{border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:10px;padding:8px 14px;font:inherit}
+.nav span{font-weight:600}
+.day{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:10px 12px;margin-bottom:10px}
+.day.today{border-color:var(--ac);box-shadow:0 0 0 1px var(--ac)}
+.day h3{margin:0 0 6px;font-size:15px;display:flex;justify-content:space-between}
+.day h3 small{color:var(--mut);font-weight:400}
+.empty{color:var(--mut);font-size:14px;padding:2px 0}
+.t{display:flex;align-items:center;gap:8px;padding:7px 0;border-top:1px solid var(--bd)}
+.t:first-of-type{border-top:0}
+.t input[type=checkbox]{width:20px;height:20px;accent-color:var(--ok);flex:none}
+.t .tx{flex:1;min-width:0;word-break:break-word}
+.t.done .tx{text-decoration:line-through;color:var(--mut)}
+.tm{font-size:13px;color:var(--ac);background:var(--acs);border-radius:6px;padding:1px 6px;flex:none}
+.sb{font-size:12px;background:var(--sps);color:var(--sp);border-radius:6px;padding:1px 6px;flex:none}
+.pin{font-size:12px;flex:none;opacity:.7}
+.t input[type=date]{width:34px;border:0;background:transparent;color:var(--mut);font-size:14px;padding:0;opacity:.8}
+.x{border:0;background:transparent;color:var(--mut);font-size:20px;padding:0 4px;flex:none}
+.goal{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.bar{height:10px;background:var(--bd);border-radius:99px;overflow:hidden;margin-top:8px}
+.bar i{display:block;height:100%;background:var(--sp);transition:width .3s}
+.stp button{border:1px solid var(--bd);background:var(--bg);color:var(--tx);border-radius:8px;width:34px;height:34px;font-size:18px}
+.sec{margin:0 0 6px;font-size:13px;color:var(--mut);text-transform:uppercase;letter-spacing:.04em}
+.rule{display:flex;gap:6px;align-items:center;margin-top:8px}
+.rule .num{flex:none;width:64px;text-align:center}
+.lab{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px}
+.lab input[type=number]{flex:none;width:70px;text-align:center}
+.lab input[type=checkbox]{width:22px;height:22px;accent-color:var(--ac)}
+.f{flex:1;min-width:0;padding:12px;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--tx);font:inherit}
+.big{font-size:40px;font-weight:700;line-height:1}
+.fin{background:var(--bg);border:1px solid var(--bd);border-radius:10px;padding:10px;margin:4px 0 8px}
+.bars{display:flex;gap:6px;height:80px;margin-top:6px}
+.bars>div{flex:1;display:flex;flex-direction:column;justify-content:flex-end;text-align:center;font-size:11px;color:var(--mut)}
+.bars i{display:block;background:var(--sp);border-radius:4px 4px 0 0;min-height:2px;margin-bottom:3px}
+details summary{cursor:pointer}
+button{touch-action:manipulation}
+textarea.f{width:100%;min-height:70px;margin-top:8px;font-size:13px}
+.sr{flex-wrap:wrap}
+.sr .tx{flex:1 1 60%}
+.ctl{flex:1 1 100%;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.t input[type=time]{width:92px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx);font:inherit;font-size:14px;padding:5px}
+input[type=range]{accent-color:var(--sp)}
+#ex{display:none}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<main>
+<h1>📅 Alltagsplaner</h1>
+<div class="box" id="ib" hidden><b>📲 Als App installieren</b><div class="hint" id="it" style="margin-top:4px"></div><button class="btn ghost" id="ix" style="margin-top:8px">Verstanden</button></div>
+<div class="box">
+  <button class="btn" id="ai" style="width:100%">🧠 Smart sortieren</button>
+  <div class="chips"><button class="chip" id="ex"></button></div>
+  <div class="note" id="nt" hidden></div>
+</div>
+<div class="tabs">
+  <button class="tab on" id="tw">📅 Woche</button>
+  <button class="tab sp" id="ts">🏃 Sport</button>
+  <button class="tab" id="tr">⚙️ Regeln</button>
+</div>
+
+<div id="vw">
+  <div class="box">
+    <div class="row">
+      <input type="text" id="in" placeholder="z. B. Zahnarzt Mittwoch 14:30" autocomplete="off" enterkeyhint="done">
+      <button class="btn" id="add">Hinzufügen</button>
+    </div>
+    <div class="hint" id="pv"></div>
+    <div class="sec" style="margin-top:10px">Diese Tage passen mir</div>
+    <div class="chips" id="av"></div>
+  </div>
+  <div class="nav"><button id="pw">‹</button><span id="wl"></span><button id="nw">›</button></div>
+  <div id="wk"></div>
+</div>
+
+<div id="vs" hidden><div id="sv"></div></div>
+
+<div id="vr" hidden><div id="rl"></div></div>
+</main>
+
+<script>
+var DN=["Sonntag","Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag"];
+var DS=["So","Mo","Di","Mi","Do","Fr","Sa"];
+var SPORT=/(sport|training|trainieren|workout|fitness|gym|laufen|joggen|jogging|yoga|pilates|schwimmen|radfahren|radeln|fahrrad|wandern|fußball|fussball|tennis|handball|basketball|volleyball|klettern|boxen|tanzen|krafttraining|cardio|spinning|crossfit|turnen|spazieren)/i;
+var S={tasks:[],avail:[1,2,3,4,5,6,0],sportDays:[1,2,3,4,5,6,0],goal:3,defRest:1,maxDay:5,learn:true,pref:{},tm:{},ext:false,log:[],sleep:{},
+ rules:[{kw:"fußball, handball, basketball, tennis",rest:1},{kw:"laufen, joggen, jogging",rest:1},{kw:"krafttraining, gym, crossfit, workout",rest:1},{kw:"schwimmen, radfahren, fahrrad, klettern, boxen",rest:1},{kw:"yoga, pilates, spazieren, dehnen, wandern",rest:0}]};
+try{var raw=localStorage.getItem("planer1");if(raw){var p0=JSON.parse(raw);if(p0&&p0.tasks){for(var k0 in p0)S[k0]=p0[k0]}}}catch(e){}
+S.ext=false;
+S.tasks.forEach(function(t){if(t.fixed===undefined)t.fixed=true});
+function save(){try{localStorage.setItem("planer1",JSON.stringify(S))}catch(e){}}
+var wOff=0,sOff=0;
+function $(i){return document.getElementById(i)}
+function pad(n){return n<10?"0"+n:""+n}
+function iso(d){return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())}
+function fromIso(s){var a=s.split("-");return new Date(+a[0],+a[1]-1,+a[2])}
+function today(){var d=new Date();return new Date(d.getFullYear(),d.getMonth(),d.getDate())}
+function addDays(d,n){var x=new Date(d);x.setDate(x.getDate()+n);return x}
+function monday(d){var x=new Date(d);x.setDate(x.getDate()-(x.getDay()+6)%7);return x}
+function nice(d){return DS[d.getDay()]+", "+d.getDate()+"."+(d.getMonth()+1)+"."}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+
+/* ---------- Texterkennung ---------- */
+function parse(text){
+  var t=text,date=null,time="",m,T=today();
+  if(m=t.match(/(?:\bum\s+|\bab\s+|\bgegen\s+)?\b([01]?\d|2[0-3])[:.]([0-5]\d)(?:\s*uhr)?/i)){time=pad(+m[1])+":"+m[2];t=t.replace(m[0],"")}
+  else if(m=t.match(/(?:\bum\s+|\bab\s+|\bgegen\s+)?\b([01]?\d|2[0-3])\s*uhr\b/i)){time=pad(+m[1])+":00";t=t.replace(m[0],"")}
+  else if(m=t.match(/\bum\s+([01]?\d|2[0-3])\b(?!\.)/i)){time=pad(+m[1])+":00";t=t.replace(m[0],"")}
+  var dp=t.match(/\b(morgens|früh|vormittags|mittags|nachmittags|abends|nachts)\b/i);
+  if(dp){
+    var dw=dp[1].toLowerCase();
+    if(time){var hh=+time.slice(0,2),mm=time.slice(3);if((dw=="abends"&&hh>=6&&hh<=11)||(dw=="nachmittags"&&hh>=1&&hh<=11)||(dw=="mittags"&&hh>=1&&hh<=3))time=pad(hh+12)+":"+mm}
+    else{var dm={morgens:420,"früh":420,vormittags:600,mittags:750,nachmittags:900,abends:1140}[dw];if(dm)time=fromMin(dm)}
+    t=t.replace(dp[0],"")
+  }
+  if(m=t.match(/(?:\bam\s+)?\b(\d{1,2})\.(\d{1,2})\.(\d{2,4})?/)){
+    var y=m[3]?(+m[3]<100?2000+ +m[3]:+m[3]):T.getFullYear();
+    var d=new Date(y,+m[2]-1,+m[1]);
+    if(!m[3]&&d<T)d=new Date(y+1,+m[2]-1,+m[1]);
+    if(d.getMonth()==+m[2]-1){date=d;t=t.replace(m[0],"")}
+  }
+  if(!date){
+    if(m=t.match(/\bübermorgen\b/i)){date=addDays(T,2);t=t.replace(m[0],"")}
+    else if(m=t.match(/\bmorgen\b/i)){date=addDays(T,1);t=t.replace(m[0],"")}
+    else if(m=t.match(/\bheute\b/i)){date=T;t=t.replace(m[0],"")}
+  }
+  if(!date){
+    var full=t.match(/(?:\b(?:am|nächsten|nächste|kommenden)\s+)?\b(sonntag|montag|dienstag|mittwoch|donnerstag|freitag|samstag|sonnabend)\b/i);
+    var sh=!full&&t.match(/\bam\s+(mo|di|mi|do|fr|sa|so)\b\.?/i);
+    var hit=full||sh;
+    if(hit){
+      var nm=hit[hit.length-1].toLowerCase().slice(0,2);
+      var wd={so:0,mo:1,di:2,mi:3,do:4,fr:5,sa:6}[nm];
+      date=addDays(T,(wd-T.getDay()+7)%7);t=t.replace(hit[0],"")
+    }
+  }
+  var title=t.replace(/\s+/g," ").replace(/^[\s,\-–:]+|[\s,\-–:]+$/g,"").replace(/\b(am|um)$/i,"").trim();
+  return{title:title,date:date,time:time}
+}
+
+/* ---------- Regeln ---------- */
+function ruleFor(text){
+  var l=text.toLowerCase();
+  for(var i=0;i<S.rules.length;i++){var ks=S.rules[i].kw.split(",");for(var j=0;j<ks.length;j++){var k=ks[j].trim().toLowerCase();if(k&&l.indexOf(k)>-1)return{r:S.rules[i],k:k}}}
+  return null
+}
+function restOf(text){var m=ruleFor(text);return m?m.r.rest:S.defRest}
+function isSport(text){return SPORT.test(text)||!!ruleFor(text)}
+function keyOf(text){var m=ruleFor(text);if(m)return m.k;var w=text.toLowerCase().split(/\s+/).filter(function(x){return x.length>2})[0];return w||text.toLowerCase()}
+
+/* ---------- Lokaler Smart-Planer (kein Server, keine externe KI) ---------- */
+function viol(ss){
+  var out=[],i,j,a,b,gap;
+  for(i=0;i<ss.length;i++)for(j=0;j<ss.length;j++){
+    a=ss[i];b=ss[j];
+    if(i==j||a.rest<1||b.rest<1)continue;
+    if(a.di<b.di||(a.di==b.di&&i<j)){
+      gap=a.di==b.di?-1:b.di-a.di-1;
+      if(gap<a.rest)out.push({a:a,b:b,gap:Math.max(gap,0),diff:a.rest-gap})
+    }
+  }
+  return out
+}
+function cost(V,X,W){
+  var cnt=X.cnt.slice(),ss=X.ss.slice(),c=0,i,v,wd,p;
+  for(i=0;i<V.length;i++){
+    v=V[i];if(v.di<0)continue;
+    cnt[v.di]++;wd=addDays(X.T,v.di).getDay();
+    if((v.sport?S.sportDays:S.avail).indexOf(wd)<0)c+=80;
+    c+=v.di*(v.sport?0.2:0.5);
+    p=S.learn&&S.pref[v.key];if(p&&p[wd])c-=4*Math.max(-3,Math.min(3,p[wd]));
+    if(v.sport){
+      ss.push({di:v.di,rest:v.rest});
+      if(v.rest>0&&wf(v.t)>0.5&&v.di<X.nhb)c+=150*(X.nhb-v.di);
+      var p2=S.learn&&S.pref[v.tkey];if(p2&&p2[wd])c-=2*Math.max(-3,Math.min(3,p2[wd]));
+      var ft=X.ft[v.di],sm=v.sm[v.di];if(sm>=0)for(var q=0;q<ft.length;q++)if(Math.abs(ft[q]-sm)<90)c+=30
+    }
+  }
+  for(i=0;i<W;i++){c+=cnt[i]*cnt[i]*2;if(cnt[i]>S.maxDay)c+=(cnt[i]-S.maxDay)*50}
+  var vs=viol(ss);for(i=0;i<vs.length;i++)c+=150*vs[i].diff;
+  return c
+}
+function solve(flex,W){
+  var T=today(),st=status(),X={T:T,cnt:[],ss:[],ft:[],nhb:nhbDay(st)},i;
+  for(i=0;i<W;i++){X.cnt.push(0);X.ft.push([])}
+  S.tasks.forEach(function(t){
+    if(t.fixed||t.done){
+      var di=Math.round((fromIso(t.date)-T)/864e5);
+      if(di>=0&&di<W){X.cnt[di]++;if(t.time&&!t.tauto)X.ft[di].push(toMin(t.time))}
+      if(t.sport&&di>=-5&&di<W+5)X.ss.push({di:di,rest:restOf(t.text)})
+    }
+  });
+  var V=flex.map(function(t){
+    var sm=[],d;for(d=0;d<W;d++)sm.push(t.sport?toMin(sugTime(t,addDays(T,d),st)):-1);
+    return{t:t,sport:t.sport,rest:t.sport?restOf(t.text):0,di:-1,key:keyOf(t.text),tkey:"#"+wtOf(t),sm:sm}
+  });
+  var best=null,bc=1e18,r;
+  for(r=0;r<14;r++){
+    var ord=V.slice();
+    if(r==0)ord.sort(function(a,b){return b.rest-a.rest});else ord.sort(function(){return Math.random()-.5});
+    V.forEach(function(v){v.di=-1});
+    ord.forEach(function(v){var bd=0,bs=1e18,d,s;for(d=0;d<W;d++){v.di=d;s=cost(V,X,W);if(s<bs){bs=s;bd=d}}v.di=bd});
+    for(var pass=0;pass<20;pass++){
+      var ch=false;
+      ord.forEach(function(v){var o=v.di,bd=o,bs=cost(V,X,W),d,s;for(d=0;d<W;d++){if(d==o)continue;v.di=d;s=cost(V,X,W);if(s<bs-1e-9){bs=s;bd=d}}v.di=bd;if(bd!=o)ch=true});
+      if(!ch)break
+    }
+    var c=cost(V,X,W);if(c<bc){bc=c;best=V.map(function(v){return v.di})}
+  }
+  V.forEach(function(v,i){v.di=best[i]});
+  return{V:V,X:X,W:W}
+}
+function vcount(r){return viol(r.X.ss.concat(r.V.filter(function(v){return v.sport}).map(function(v){return{di:v.di,rest:v.rest}}))).length}
+function sportWarnings(){
+  var T=today(),ss=[];
+  S.tasks.forEach(function(t){if(t.sport){var di=Math.round((fromIso(t.date)-T)/864e5);if(di>=-5&&di<21)ss.push({di:di,rest:restOf(t.text),t:t})}});
+  return viol(ss).filter(function(v){return v.b.di>=0}).map(function(v){
+    return"⚠️ "+esc(v.a.t.text)+" ("+DS[fromIso(v.a.t.date).getDay()]+") → "+esc(v.b.t.text)+" ("+DS[fromIso(v.b.t.date).getDay()]+"): "+v.gap+" Pausentag(e), Regel: "+v.a.rest
+  })
+}
+function sportLine(){
+  var T=today(),L=S.tasks.filter(function(x){return x.sport&&!x.done&&fromIso(x.date)>=T}).sort(function(a,b){return a.date<b.date?-1:1});
+  return L.length?"🏃 "+L.map(function(x){return DS[fromIso(x.date).getDay()]+" "+(x.time?x.time+" ":"")+esc(x.text)}).join(" → "):""
+}
+function setNote(h,err){var n=$("nt");n.innerHTML=h||"";n.hidden=!h;n.classList.toggle("err",!!err)}
+function learn(k,wd,w){S.pref[k]=S.pref[k]||{};S.pref[k][wd]=(S.pref[k][wd]||0)+w}
+function learnTime(k,tm){S.tm[k]=S.tm[k]||{};S.tm[k][tm]=(S.tm[k][tm]||0)+1}
+function bestTime(k){var o=S.tm[k],b=null,n=1,t;if(o)for(t in o)if(o[t]>n){n=o[t];b=t}return b}
+function habitOf(k){
+  var p=S.pref[k]||{},a=[],wd;
+  for(wd in p)if(p[wd]>0)a.push([+wd,p[wd]]);
+  a.sort(function(x,y){return y[1]-x[1]});
+  var s1=a.slice(0,2).map(function(x){return DS[x[0]]+" ("+x[1]+"×)"}).join(", "),tm=bestTime(k);
+  return (s1?"meist "+s1:"")+(tm?(s1?", ":"")+"um "+tm+" Uhr":"")
+}
+function habitsHtml(){
+  var keys={},k,rows="";
+  for(k in S.pref)keys[k]=1;
+  for(k in S.tm)keys[k]=1;
+  Object.keys(keys).forEach(function(k){if(k.indexOf("|")>-1)return;var h=habitOf(k),lb=k[0]=="#"?"Alle "+((WT[k.slice(1)]||{}).n||k.slice(1)):k;if(h)rows+='<div class="hint" style="margin-top:4px"><b>'+esc(lb)+':</b> '+esc(h)+'</div>'});
+  return '<div class="box"><div class="sec">Gelernte Gewohnheiten</div>'+
+  (rows||'<div class="hint" style="margin-top:0">Noch nichts gelernt. Der Planer merkt sich Wochentage und Uhrzeiten, wenn du Aufgaben mit Datum anlegst, verschiebst oder abhakst.</div>')+
+  '<button class="btn ghost" data-a="reset" style="width:100%;margin-top:10px">Gelerntes zurücksetzen</button></div>'+
+  '<div class="box"><div class="sec">Daten sichern</div><div class="hint" style="margin-top:0">Deine Daten liegen nur in diesem Browser. Sichere sie hier, falls du das Gerät wechselst oder Browserdaten löschst.</div><textarea class="f" id="bk" placeholder="Hier erscheint die Sicherung. Zum Wiederherstellen hier einfügen."></textarea><div class="row" style="margin-top:8px"><button class="btn ghost" data-a="bkexp" style="flex:1">Sichern</button><button class="btn ghost" data-a="bkimp" style="flex:1">Wiederherstellen</button></div></div>'
+}
+function updEx(){var b=$("ex");b.textContent=S.ext?"🤖 Externe KI: an":"🔒 Externe KI: aus (alles lokal)";b.classList.toggle("on",!!S.ext)}
+function noteText(prefix,n,extLine){
+  var w=sportWarnings().concat(timeWarnings());
+  setNote(prefix+"🧠 "+n+" Aufgabe(n) lokal verteilt."+(sportLine()?"<br>"+sportLine():"")+(w.length?"<br>"+w.join("<br>"):"")+(extLine?"<br>"+extLine:""),w.length>0)
+}
+var extBusy=false;
+async function smartSort(prefix){
+  prefix=prefix?prefix+"<br>":"";
+  var flex=S.tasks.filter(function(x){return !x.fixed&&!x.done});
+  if(!flex.length){setNote(prefix+"Nichts zu sortieren: alle offenen Aufgaben haben feste Tage.");return}
+  var r=solve(flex,7);
+  if(vcount(r)>0){var r2=solve(flex,14);if(vcount(r2)<vcount(r))r=r2}
+  var T=today();
+  r.V.forEach(function(v){v.t.date=iso(addDays(T,v.di))});
+  save();render();
+  if(!S.ext){noteText(prefix,flex.length,"");return}
+  if(extBusy)return;
+  var sample=null;
+  try{sample=window.claude?await window.claude.use("sample"):null}catch(e){}
+  if(!sample){noteText(prefix,flex.length,"🤖 Externe KI nicht verfügbar. Es gilt der lokale Plan.");return}
+  extBusy=true;
+  noteText(prefix,flex.length,"🤖 Externe KI verfeinert …");
+  try{
+    var c0=cost(r.V,r.X,r.W),v0=vcount(r),old=r.V.map(function(v){return v.di}),days=[],i,d;
+    for(i=0;i<r.W;i++){d=addDays(T,i);days.push({date:iso(d),wochentag:DN[d.getDay()],passt:S.avail.indexOf(d.getDay())>-1,sportErlaubt:S.sportDays.indexOf(d.getDay())>-1})}
+    var items=r.V.map(function(v,n){return{n:n,text:v.t.text,sport:v.sport,pausentageDanach:v.rest,lokalerVorschlag:iso(addDays(T,old[n])),gewohnheit:S.learn?habitOf(v.key):""}});
+    var fs=S.tasks.filter(function(t){return t.fixed&&t.sport&&!t.done&&t.date>=iso(T)}).map(function(t){return{text:t.text,datum:t.date,pausentageDanach:restOf(t.text)}});
+    var q="Du hilfst bei der Wochenplanung. Heute ist "+DN[T.getDay()]+" der "+iso(T)+". Verfeinere den lokalen Vorschlag für die flexiblen Aufgaben und gib für jede einen Tag zurück (nur Daten aus der Tageliste).\n\nTage: "+JSON.stringify(days)+"\nFlexible Aufgaben: "+JSON.stringify(items)+"\nFeste Sporttermine (Belastung, nicht verschiebbar): "+JSON.stringify(fs)+"\nMaximal "+S.maxDay+" Aufgaben pro Tag.\n\nRegeln:\n1) Pausenregeln strikt einhalten: Zwischen zwei Sporteinheiten mit pausentageDanach>0 müssen nach der früheren mindestens so viele freie Tage liegen. Einheiten mit 0 sind leicht und überall erlaubt.\n2) Nur Tage mit passt:true, Sport nur an Tagen mit sportErlaubt:true.\n3) Gleichmäßig verteilen, Wichtiges früher, Gewohnheiten der Person beachten.\n4) Ändere den lokalen Vorschlag nur, wenn du es damit besser machst.\n\nAntworte NUR mit JSON ohne Markdown: "+'{"plan":[{"n":0,"date":"YYYY-MM-DD"}],"hinweis":"1-2 kurze deutsche Sätze, was du geändert hast und warum"}';
+    var res=await sample.json(q,{cache:false}),okc=0;
+    ((res&&res.plan)||[]).forEach(function(e){
+      var v=r.V[e.n];if(!v||typeof e.date!="string")return;
+      var di=Math.round((fromIso(e.date)-T)/864e5);
+      if(di>=0&&di<r.W){v.di=di;okc++}
+    });
+    if(!okc)throw 0;
+    var c1=cost(r.V,r.X,r.W),v1=vcount(r);
+    if(v1<=v0&&c1<=c0+15){
+      r.V.forEach(function(v){v.t.date=iso(addDays(T,v.di))});
+      save();render();
+      noteText(prefix,flex.length,"🤖 "+esc(String((res&&res.hinweis)||"Plan von der externen KI verfeinert.")))
+    }else{
+      r.V.forEach(function(v,i){v.di=old[i]});
+      noteText(prefix,flex.length,"🤖 Der KI-Vorschlag hätte deine Regeln verletzt und wurde verworfen. Es gilt der lokale Plan.")
+    }
+  }catch(e){
+    noteText(prefix,flex.length,"🤖 Externe KI nicht erreichbar oder nicht freigegeben. Es gilt der lokale Plan.")
+  }
+  extBusy=false
+}
+function addTask(text,forceSport){
+  var p=parse(text);
+  if(!p.title)return null;
+  var sport=forceSport||isSport(p.title),ty=guessType(p.title),dd=p.date||today();
+  if(S.learn){
+    if(p.time&&plausible(p.time,sport))learnT(keyOf(p.title),ty,sport,dd.getDay(),p.time,1);
+    if(p.date)learnDay(p.title,ty,sport,p.date.getDay(),1)
+  }
+  var t={id:Date.now()+Math.random(),text:p.title,date:iso(dd),time:p.time,tauto:false,sport:sport,done:false,fixed:!!p.date};
+  S.tasks.push(t);save();return t
+}
+
+/* ---------- Anzeige ---------- */
+function taskHtml(x,showSport){
+  return '<div class="t'+(x.done?" done":"")+'" data-id="'+x.id+'">'+
+  '<input type="checkbox" '+(x.done?"checked":"")+' data-a="chk" aria-label="erledigt">'+
+  (x.time?'<span class="tm" title="'+(x.tauto?"Vorschlag":"")+'">'+(x.tauto?"~":"")+x.time+'</span>':"")+
+  '<span class="tx">'+esc(x.text)+'</span>'+
+  (x.sport&&showSport?'<span class="sb">🏃</span>':"")+
+  (x.fixed?'<span class="pin" title="fester Termin">📌</span>':"")+
+  ((ST&&timeIssue(x,ST))?'<button class="chip" data-a="fixt" title="'+esc(timeIssue(x,ST))+'">⚠️ '+sugTime(x,fromIso(x.date),ST,true)+'</button>':"")+
+  '<input type="date" value="'+x.date+'" data-a="mv" title="Verschieben" aria-label="Verschieben">'+
+  '<button class="x" data-a="del" aria-label="Löschen">×</button></div>'
+}
+function sorted(a){return a.slice().sort(function(p,q){return (p.time||"99")<(q.time||"99")?-1:1})}
+function range(M){var e=addDays(M,6);return M.getDate()+"."+(M.getMonth()+1)+". – "+e.getDate()+"."+(e.getMonth()+1)+"."}
+function renderWeek(){
+  var M=addDays(monday(today()),wOff*7),h="",T=iso(today());
+  $("wl").textContent=range(M)+(wOff==0?" (diese Woche)":"");
+  for(var i=0;i<7;i++){
+    var d=addDays(M,i),ds=iso(d),L=sorted(S.tasks.filter(function(x){return x.date==ds}));
+    h+='<div class="day'+(ds==T?" today":"")+'"><h3>'+DN[d.getDay()]+' <small>'+d.getDate()+"."+(d.getMonth()+1)+".</small></h3>"+
+    (L.length?L.map(function(x){return taskHtml(x,true)}).join(""):'<div class="empty">Nichts geplant</div>')+"</div>"
+  }
+  $("wk").innerHTML=h;
+  var c="";[1,2,3,4,5,6,0].forEach(function(n){c+='<button class="chip'+(S.avail.indexOf(n)>-1?" on":"")+'" data-d="'+n+'">'+DS[n]+"</button>"});
+  $("av").innerHTML=c
+}
+/* ---------- Sport: Workouts, Schlaf, Regeneration ---------- */
+var WT={kraft:{n:"Kraft",f:1},ausdauer:{n:"Ausdauer",f:0.9},hiit:{n:"HIIT / Intervalle",f:1.2},team:{n:"Mannschaftssport",f:1.1},mobility:{n:"Mobility / Yoga",f:0.3},leicht:{n:"Leicht (Spazieren)",f:0.3},sonst:{n:"Sonstiges",f:1}};
+var HR=36e5,S_fin=null,S_q=3,QE=["😫","😕","😐","🙂","😄"];
+function toMin(x){var a=x.split(":");return +a[0]*60+ +a[1]}
+function fromMin(m){return pad(Math.floor(m/60))+":"+pad(m%60)}
+function roundHalf(m){return Math.round(m/30)*30}
+var DEFT={kraft:1080,ausdauer:1050,hiit:1080,team:1140,mobility:1170,leicht:1020,sonst:1080};
+var DEFW={kraft:600,ausdauer:570,hiit:600,team:900,mobility:600,leicht:660,sonst:600};
+function plausible(time,sport){var m=toMin(time);return sport?(m>=330&&m<1320):m>=300}
+function bestIn(o){var b=null,n=1,t;if(o)for(t in o)if(o[t]>n){n=o[t];b=t}return b}
+function learnDay(name,ty,sport,wd,w){learn(keyOf(name),wd,w);if(sport)learn("#"+ty,wd,w)}
+function learnT(key,ty,sport,wd,time,w){
+  var ks=[key,key+"|"+wd];
+  if(sport){ks.push("#"+ty);ks.push("#"+ty+"|"+wd)}
+  ks.forEach(function(k){S.tm[k]=S.tm[k]||{};S.tm[k][time]=(S.tm[k][time]||0)+w})
+}
+/* Sinnvolle Uhrzeit: gelernt (Aufgabe+Wochentag, Aufgabe, Sportart), sonst Standard je Art und Wochentag */
+function sugTime(t,d,st,avoid){
+  var wd=d.getDay(),k=keyOf(t.text),ty=wtOf(t),sp=t.sport,r=null,wk=wd==0||wd==6;
+  if(S.learn)r=bestIn(S.tm[k+"|"+wd])||bestIn(S.tm[k])||(sp&&(bestIn(S.tm["#"+ty+"|"+wd])||bestIn(S.tm["#"+ty])))||null;
+  var m=toMin(r||fromMin((wk?DEFW:DEFT)[ty]||1080));
+  if(sp&&wf(t)>0.5&&st&&st.left>0.5&&iso(d)==iso(new Date(st.until))){
+    var u=new Date(st.until);m=Math.max(m,Math.ceil((u.getHours()*60+u.getMinutes())/30)*30)
+  }
+  if(avoid){
+    var offs=[0,90,-90,180,-180],i,c,ok;
+    for(i=0;i<offs.length;i++){
+      c=m+offs[i];if(c<360||c>1260)continue;ok=true;
+      S.tasks.forEach(function(o){if(o!==t&&!o.done&&o.date==iso(d)&&o.time&&!o.tauto&&Math.abs(toMin(o.time)-c)<90)ok=false});
+      if(ok){m=c;break}
+    }
+  }
+  return fromMin(Math.max(360,Math.min(m,1290)))
+}
+function fillTimes(){
+  var st=status(),ch=false;
+  S.tasks.forEach(function(t){
+    if(t.done||(t.time&&!t.tauto))return;
+    var d=fromIso(t.date),nt="";
+    if(t.sport)nt=sugTime(t,d,st,true);
+    else if(S.learn){var k=keyOf(t.text),wd=d.getDay();nt=bestIn(S.tm[k+"|"+wd])||bestIn(S.tm[k])||""}
+    if(nt!==(t.time||"")){t.time=nt;t.tauto=!!nt;ch=true}
+  });
+  if(ch)save()
+}
+function timeIssue(t,st){
+  if(!t.time||t.done)return"";
+  var m=toMin(t.time),hard=t.sport&&wf(t)>0.5;
+  if(t.sport){
+    if(m<330)return"zu früh am Morgen, das geht zulasten von Schlaf und Erholung.";
+    if(m>=1320)return"zu spät am Abend, das geht zulasten von Schlaf und Erholung.";
+    if(hard&&m>=1260)return"intensives Training so spät stört den Schlaf."
+  }else if(m<300)return"mitten in der Nacht.";
+  if(hard&&st&&st.left>0.5&&t.date>=iso(today())){
+    var d=fromIso(t.date);d.setHours(Math.floor(m/60),m%60,0,0);
+    if(d.getTime()<st.until-30*60000)return"du bist dann noch nicht erholt (erst ab "+fmtTs(st.until)+")."
+  }
+  return""
+}
+function timeWarnings(){
+  var st=status(),T=iso(today()),out=[];
+  S.tasks.forEach(function(t){
+    if(t.done||t.date<T)return;
+    var i=timeIssue(t,st);
+    if(i){var d=fromIso(t.date);out.push("⚠️ "+esc(t.text)+" ("+DS[d.getDay()]+" "+t.time+"): "+i+" Vorschlag: <b>"+sugTime(t,d,st,true)+"</b> (🕒 an der Aufgabe antippen)")}
+  });
+  return out
+}
+function fixTask(t){
+  var st=status();
+  if(t.sport&&wf(t)>0.5&&st.left>0.5){var nd=addDays(today(),nhbDay(st));if(fromIso(t.date)<nd)t.date=iso(nd)}
+  t.time=sugTime(t,fromIso(t.date),st,true);t.tauto=true
+}
+function guessType(t){
+  var l=t.toLowerCase();
+  if(/yoga|pilates|dehnen|mobility|stretch/.test(l))return"mobility";
+  if(/spazier|wandern|walk/.test(l))return"leicht";
+  if(/hiit|intervall|crossfit|sprint|tabata/.test(l))return"hiit";
+  if(/fußball|fussball|handball|basketball|tennis|volleyball|hockey|badminton/.test(l))return"team";
+  if(/kraft|gym|hantel|bein|brust|rücken|oberkörper|unterkörper|push|pull/.test(l))return"kraft";
+  if(/lauf|jogg|rad|schwimm|cardio|ausdauer|rudern/.test(l))return"ausdauer";
+  return"sonst"
+}
+function wtOf(t){return t.wtype||guessType(t.text)}
+function wf(t){return (WT[wtOf(t)]||WT.sonst).f}
+function loadOf(e){return e.dur*e.rpe*(WT[e.wtype]||WT.sonst).f}
+function sleepInfo(){
+  var T=today(),a=[],i,e;
+  for(i=0;i<2;i++){e=S.sleep[iso(addDays(T,-i))];if(e)a.push(e)}
+  if(!a.length)return{f:1,have:false};
+  var h=a.length>1?a[0].h*0.65+a[1].h*0.35:a[0].h,q=a[0].q||3,f=1;
+  if(h<7.5)f+=Math.min(0.5,(7.5-h)*0.1);
+  if(h<5)f+=0.1;
+  if(q<=2)f+=0.1;else if(q>=4)f-=0.05;
+  return{f:f,have:true,h:h,q:q}
+}
+function recHours(e,f){return Math.min(96,6+loadOf(e)/10)*f}
+function fmtTs(ts){
+  var d=new Date(ts),dd=new Date(d.getFullYear(),d.getMonth(),d.getDate()),diff=Math.round((dd-today())/864e5);
+  return (diff==0?"heute":diff==1?"morgen":DS[d.getDay()]+" "+d.getDate()+"."+(d.getMonth()+1)+".")+" "+pad(d.getHours())+":"+pad(d.getMinutes())
+}
+function status(){
+  var now=Date.now(),sf=sleepInfo(),rem=[],i,left=0;
+  S.log.forEach(function(e){var l=recHours(e,sf.f)-(now-e.ts)/HR;if(l>0)rem.push({l:l,e:e})});
+  rem.sort(function(a,b){return b.l-a.l});
+  if(rem.length){left=rem[0].l;for(i=1;i<rem.length;i++)left+=0.25*rem[i].l}
+  var T0=today().getTime(),w7=0,w28=0;
+  S.log.forEach(function(e){var age=(T0+864e5-e.ts)/864e5;if(age<=7)w7+=loadOf(e);else if(age<=28)w28+=loadOf(e)});
+  var ramp=w28>0&&w7>1.5*(w28/3);
+  if(ramp&&left>0)left*=1.15;
+  var tip="";
+  if(rem.length&&left>0.5){var e0=rem[0].e;if(e0.wtype=="kraft"&&(e0.focus=="ober"||e0.focus=="unter"))tip="Der andere Muskelbereich ("+(e0.focus=="ober"?"Unterkörper":"Oberkörper")+") ist schon ab "+fmtTs(now+left*0.5*HR)+" wieder okay."}
+  return{left:left,until:now+left*HR,sf:sf,ramp:ramp,tip:tip}
+}
+function nhbDay(s0){
+  s0=s0||status();if(s0.left<=0.5)return 0;
+  var u=new Date(s0.until),di=Math.max(0,Math.floor((s0.until-today().getTime())/864e5));
+  if(u.getHours()+u.getMinutes()/60>=20.5)di++;
+  return di
+}
+function logWorkout(o){
+  o.id=Date.now()+Math.random();o.date=iso(new Date(o.ts));S.log.push(o);
+  if(S.learn){
+    var od=new Date(o.ts),mi=od.getHours()*60+od.getMinutes();
+    learnDay(o.name,o.wtype,true,od.getDay(),1);
+    if(Math.abs(o.ts-Date.now())<6e4&&mi>=330&&mi<=1320)learnT(keyOf(o.name),o.wtype,true,od.getDay(),fromMin(roundHalf(mi)),1)
+  }
+  save()
+}
+function afterLog(name){
+  var st=status(),msg="✅ „"+esc(name)+"“ gespeichert. "+(st.left>0.5?"Regeneration: ca. "+Math.round(st.left)+" h, nächste intensive Einheit ab "+fmtTs(st.until)+".":"Du bist schnell wieder erholt.");
+  if(S.tasks.some(function(x){return !x.fixed&&!x.done}))smartSort(msg);else setNote(msg)
+}
+function finishTask(t){
+  var dur=Math.max(1,Math.round(+$("fd").value||t.dur||30)),rpe=+$("fr").value||6;
+  logWorkout({name:t.text,wtype:wtOf(t),focus:t.focus||"",dur:dur,rpe:rpe,ts:Date.now()});
+  t.done=true;t.date=iso(today());S_fin=null;save();render();afterLog(t.text)
+}
+function addWorkout(){
+  var name=$("wn").value.trim();if(!name)return;
+  var t=addTask(name,true);if(!t)return;
+  var ty=$("wt").value;t.wtype=ty=="auto"?guessType(t.text):ty;
+  t.dur=Math.max(5,Math.round(+$("wd").value||45));t.focus=$("wf").value;
+  var dv=$("wdt").value;if(dv){t.date=dv;t.fixed=true}
+  save();
+  var msg="🏃 Geplant: "+esc(t.text);
+  if(!t.fixed){smartSort(msg);return}
+  render();
+  var w=sportWarnings().concat(timeWarnings());
+  setNote(msg+" → "+nice(fromIso(t.date))+(w.length?"<br>"+w.join("<br>"):""),w.length>0)
+}
+function addActivity(){
+  var ty=$("at").value,name=$("an").value.trim()||WT[ty].n,when=+$("aw").value,ts=Date.now();
+  if(when>0){var d=addDays(today(),-when);d.setHours(18,0,0,0);ts=d.getTime()}
+  logWorkout({name:name,wtype:ty,focus:"",dur:Math.max(1,Math.round(+$("ad").value||30)),rpe:+$("ar").value||5,ts:ts});
+  renderSport();afterLog(name)
+}
+function saveSleep(){
+  var h=Math.max(0,Math.min(14,+$("sh").value||0));
+  S.sleep[iso(today())]={h:h,q:S_q};save();renderSport();
+  var st=status();
+  setNote("😴 Schlaf gespeichert ("+h+" h). "+(st.left>0.5?"Aktuelle Regeneration: ca. "+Math.round(st.left)+" h.":"Du bist erholt."))
+}
+function selHtml(id,cur,auto){
+  var h='<select class="f" id="'+id+'">',k;
+  if(auto)h+='<option value="auto">Art: automatisch</option>';
+  for(k in WT)h+='<option value="'+k+'"'+(k==cur?" selected":"")+'>'+WT[k].n+'</option>';
+  return h+'</select>'
+}
+function finForm(x){
+  return '<div class="fin" data-id="'+x.id+'"><div class="lab" style="margin-top:0"><span>Dauer (Min.)</span><input type="number" id="fd" min="1" max="400" value="'+(x.dur||45)+'"></div>'+
+  '<div class="lab"><span>Anstrengung <b id="frv">6</b>/10</span><input type="range" id="fr" min="1" max="10" value="6" style="flex:1"></div>'+
+  '<div class="hint">1 = sehr leicht, 5 = mittel, 8 = hart, 10 = maximal</div>'+
+  '<div class="row" style="margin-top:8px"><button class="btn sp" data-a="fsave" style="flex:1">Speichern</button><button class="btn ghost" data-a="fcancel">Abbrechen</button></div></div>'
+}
+function renderSport(){
+  var st=status(),T=today(),h="",i,e;
+  var sc=Math.max(0,Math.min(100,Math.round(100-st.left*1.3-(st.sf.have?(st.sf.f-1)*40:0))));
+  var col=sc>=75?"var(--ok)":sc>=45?"var(--ac)":"var(--sp)";
+  var lab=sc>=75?"Bereit für intensives Training":sc>=45?"Leichtes bis mittleres Training passt":"Heute besser Pause oder Mobility";
+  var tips=[];
+  if(st.left>0.5){
+    tips.push("Nächste intensive Einheit ab <b>"+fmtTs(st.until)+"</b> (in ca. "+Math.round(st.left)+" h).");
+    if(st.tip)tips.push(st.tip);
+    tips.push("Bis dahin gut: Spazieren, Mobility, genug trinken und eiweißreich essen. Ziel heute Nacht: 8 bis 9 h Schlaf.")
+  }else tips.push("Du bist erholt. Eine intensive Einheit ist möglich.");
+  if(!st.sf.have)tips.push("Trag unten deinen Schlaf ein, dann wird die Empfehlung genauer.");
+  else if(st.sf.f>1.02)tips.push("Wenig oder schlechter Schlaf verlängert die Pause um etwa "+Math.round((st.sf.f-1)*100)+" %.");
+  if(st.ramp)tips.push("⚠️ Deine Belastung ist diese Woche stark gestiegen. Plane etwas mehr Erholung ein.");
+  if(!S.log.length)tips.push("Sobald du ein Workout abhakst oder eine Aktivität einträgst, berechne ich deine Regeneration.");
+  h+='<div class="box"><div class="goal"><div style="text-align:center"><div class="big" style="color:'+col+'">'+sc+'</div><div class="hint" style="margin:0">Bereitschaft</div></div><div style="flex:1"><b>'+lab+'</b></div></div><div class="bar"><i style="width:'+sc+'%;background:'+col+'"></i></div><div class="note">'+tips.join("<br>")+'</div></div>';
+
+  var td=S.sleep[iso(T)],sum=0,n=0;
+  if(td)S_q=td.q;
+  for(i=0;i<7;i++){e=S.sleep[iso(addDays(T,-i))];if(e){sum+=e.h;n++}}
+  h+='<div class="box"><div class="sec">😴 Schlaf letzte Nacht</div><div class="row"><input type="number" id="sh" min="0" max="14" step="0.5" value="'+(td?td.h:7.5)+'" aria-label="Stunden"><button class="btn" data-a="ssave">Speichern</button></div><div class="chips">'+
+  QE.map(function(x,i){return'<button class="chip'+(S_q==i+1?" on":"")+'" data-a="q" data-q="'+(i+1)+'">'+x+" "+(i+1)+'</button>'}).join("")+
+  '</div><div class="hint">Qualität: 1 schlecht, 5 sehr gut'+(n?" · Ø "+(sum/n).toFixed(1)+" h (letzte "+n+" Einträge)":"")+'</div></div>';
+
+  h+='<div class="box"><div class="sec">Workout planen</div><input type="text" id="wn" class="f" style="width:100%" placeholder="z. B. Beine Samstag 9 Uhr" autocomplete="off">'+
+  '<div class="row" style="margin-top:8px">'+selHtml("wt","auto",true)+'<input type="number" id="wd" class="f" min="5" max="300" value="45" style="flex:none;width:84px" aria-label="Minuten" placeholder="Min."></div>'+
+  '<div class="row" style="margin-top:8px"><select class="f" id="wf"><option value="">Fokus (Kraft): –</option><option value="ober">Oberkörper</option><option value="unter">Unterkörper</option><option value="ganz">Ganzkörper</option></select><input type="date" id="wdt" class="f" aria-label="Datum (optional)"></div>'+
+  '<div class="hint">Ohne Datum plane ich den besten Tag nach deinen Regeln und deiner Regeneration.</div>'+
+  '<button class="btn sp" data-a="addw" style="width:100%;margin-top:6px">Workout planen</button></div>';
+
+  var pl=S.tasks.filter(function(x){return x.sport&&!x.done}).sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:((a.time||"99")<(b.time||"99")?-1:1)});
+  h+='<div class="box"><div class="sec">Geplante Workouts</div>';
+  if(!pl.length)h+='<div class="empty">Nichts geplant.</div>';
+  pl.forEach(function(x){
+    var d=fromIso(x.date),dl=x.date<iso(T)?"überfällig":x.date==iso(T)?"heute":x.date==iso(addDays(T,1))?"morgen":nice(d);
+    var is=timeIssue(x,st);
+    h+='<div class="t sr" data-id="'+x.id+'"><div class="tx"><b>'+esc(x.text)+'</b><div class="hint" style="margin:0">'+dl+" · "+WT[wtOf(x)].n+" · "+(x.dur||45)+" min"+(x.tauto?" · Uhrzeit-Vorschlag":"")+(x.fixed?" 📌":"")+'</div>'+(is?'<div class="note err" style="margin-top:2px">⚠️ '+esc(is)+'</div>':"")+'</div><button class="x" data-a="del" aria-label="Löschen">×</button><div class="ctl"><input type="time" value="'+(x.time||"")+'" data-a="tm" aria-label="Uhrzeit">'+(is?'<button class="chip" data-a="fixt">🕒 '+sugTime(x,d,st,true)+' übernehmen</button>':"")+'<button class="chip on" data-a="fin">✔ Erledigt</button><input type="date" value="'+x.date+'" data-a="mv" title="Verschieben" aria-label="Verschieben"></div></div>';
+    if(String(x.id)==S_fin)h+=finForm(x)
+  });
+  h+='</div>';
+
+  h+='<details class="box"><summary style="font-weight:600">➕ Andere Aktivität nachtragen</summary><div class="hint">Spaziergang, Rad, Mannschaftssport … alles zählt für deine Erholung.</div>'+
+  '<input type="text" id="an" class="f" style="width:100%;margin-top:8px" placeholder="Name (optional)">'+
+  '<div class="row" style="margin-top:8px">'+selHtml("at","ausdauer")+'<input type="number" id="ad" class="f" min="1" max="400" value="30" style="flex:none;width:84px" aria-label="Minuten"></div>'+
+  '<div class="lab"><span>Anstrengung <b id="arv">5</b>/10</span><input type="range" id="ar" min="1" max="10" value="5" style="flex:1"></div>'+
+  '<div class="row" style="margin-top:8px"><select class="f" id="aw"><option value="0">Heute</option><option value="1">Gestern</option><option value="2">Vorgestern</option></select><button class="btn sp" data-a="adda">Eintragen</button></div></details>';
+
+  var cur=monday(T),wk=S.log.filter(function(x){var d=fromIso(x.date);return d>=cur&&d<addDays(cur,7)});
+  var pend=S.tasks.filter(function(x){var d=fromIso(x.date);return x.sport&&!x.done&&d>=cur&&d<addDays(cur,7)}).length;
+  var loads=[],mx=1;
+  for(i=6;i>=0;i--){var dd=addDays(T,-i),ds=iso(dd),l=0;S.log.forEach(function(x){if(x.date==ds)l+=loadOf(x)});loads.push([dd,l]);mx=Math.max(mx,l)}
+  h+='<div class="box"><div class="goal"><div><b>'+wk.length+' von '+S.goal+' Einheiten diese Woche</b><div class="hint" style="margin:0">'+pend+' noch geplant</div></div><div class="stp"><button data-a="gm">−</button> <button data-a="gp">+</button></div></div><div class="bar"><i style="width:'+Math.min(100,S.goal?wk.length/S.goal*100:0)+'%"></i></div>'+
+  '<div class="sec" style="margin-top:12px">Belastung letzte 7 Tage</div><div class="bars">'+loads.map(function(x){return'<div><i style="height:'+Math.round(x[1]/mx*56)+'px"></i>'+DS[x[0].getDay()]+'</div>'}).join("")+'</div></div>';
+
+  var lg=S.log.slice().sort(function(a,b){return b.ts-a.ts}).slice(0,6);
+  if(lg.length){
+    h+='<div class="box"><div class="sec">Verlauf</div>';
+    lg.forEach(function(x){h+='<div class="t" data-lid="'+x.id+'"><div class="tx"><b>'+esc(x.name)+'</b><div class="hint" style="margin:0">'+fmtTs(x.ts)+" · "+(WT[x.wtype]||WT.sonst).n+" · "+x.dur+" min · Anstrengung "+x.rpe+'/10</div></div><button class="x" data-a="dl" aria-label="Eintrag löschen">×</button></div>'});
+    h+='</div>'
+  }
+  $("sv").innerHTML=h
+}
+function renderRules(){
+  var h='<div class="box"><div class="sec">Pausen nach Sport</div><div class="hint" style="margin-top:0">Stichworte mit Komma trennen. Die Zahl sind freie Tage, die nach dieser Sportart vor der nächsten intensiven Einheit liegen müssen. 0 = leicht, jederzeit möglich.</div>';
+  S.rules.forEach(function(r,i){
+    h+='<div class="rule" data-i="'+i+'"><input type="text" value="'+esc(r.kw)+'" data-f="kw" placeholder="z. B. fußball, handball"><input class="num" type="number" min="0" max="5" value="'+r.rest+'" data-f="rest" aria-label="Pausentage"><button class="x" data-a="del" aria-label="Regel löschen">×</button></div>'
+  });
+  h+='<div class="chips"><button class="chip" data-a="addr">+ Regel</button></div>'+
+  '<div class="lab"><span>Pausentage für anderen Sport</span><input type="number" min="0" max="5" value="'+S.defRest+'" data-f="def"></div></div>'+
+  '<div class="box"><div class="sec">Allgemein</div>'+
+  '<div class="lab"><span>Max. Aufgaben pro Tag</span><input type="number" min="1" max="20" value="'+S.maxDay+'" data-f="max"></div>'+
+  '<div class="sec" style="margin-top:14px">Sport nur an diesen Tagen</div><div class="chips">';
+  [1,2,3,4,5,6,0].forEach(function(n){h+='<button class="chip'+(S.sportDays.indexOf(n)>-1?" on":"")+'" data-a="sd" data-d="'+n+'">'+DS[n]+'</button>'});
+  h+='</div><label class="lab"><span>Aus meinen Verschiebungen lernen</span><input type="checkbox" data-f="learn" '+(S.learn?"checked":"")+'></label>'+
+  '<div class="hint">Verschiebst du eine Aufgabe per Datumssymbol, merkt sich der Planer den Wochentag für diese Art von Aufgabe und bevorzugt ihn künftig. Alles läuft nur auf deinem Gerät.</div>'+
+  '<button class="btn ghost" data-a="resort" style="width:100%;margin-top:10px">Mit diesen Regeln neu sortieren</button></div>';
+  h+=habitsHtml();
+  $("rl").innerHTML=h
+}
+var ST=null;
+function render(){fillTimes();ST=status();renderWeek();renderSport()}
+
+/* ---------- Events ---------- */
+function preview(){
+  var v=$("in").value.trim();
+  if(!v){$("pv").innerHTML="Datum, Wochentag oder Uhrzeit erkenne ich automatisch. Ohne Angabe plane ich die Aufgabe selbst.";return}
+  var p=parse(v),bits=["<b>"+esc(p.title||"…")+"</b>"];
+  bits.push(p.date?"→ "+nice(p.date):"→ wird automatisch verteilt");
+  if(p.time)bits.push("um "+p.time+" Uhr");
+  if(isSport(p.title))bits.push("🏃 kommt in den Sport-Tab");
+  $("pv").innerHTML=bits.join(" · ")
+}
+function submit(id,sport){
+  var el=$(id),t=addTask(el.value,sport);
+  if(!t)return;
+  el.value="";preview();
+  var msg=(t.sport?"🏃 Zu Sport hinzugefügt: ":"✓ Eingetragen: ")+esc(t.text)+(t.auto?" (üblich um "+t.time+" Uhr)":"");
+  if(!t.fixed){smartSort(msg);return}
+  render();
+  var w=sportWarnings().concat(timeWarnings());
+  setNote(msg+" → "+nice(fromIso(t.date))+(t.time?" um "+t.time:"")+(w.length?"<br>"+w.join("<br>"):""),w.length>0)
+}
+function show(n){
+  [["vw","tw"],["vs","ts"],["vr","tr"]].forEach(function(p,i){$(p[0]).hidden=i!=n;$(p[1]).classList.toggle("on",i==n)});
+  if(n==1)renderSport();
+  if(n==2)renderRules()
+}
+$("in").addEventListener("input",preview);
+$("in").addEventListener("keydown",function(e){if(e.key=="Enter")submit("in",false)});
+$("add").onclick=function(){submit("in",false)};
+$("pw").onclick=function(){wOff--;renderWeek()};
+$("nw").onclick=function(){wOff++;renderWeek()};
+$("tw").onclick=function(){show(0)};
+$("ts").onclick=function(){show(1)};
+$("tr").onclick=function(){show(2)};
+$("ai").onclick=function(){smartSort("")};
+$("sv").addEventListener("click",function(e){
+  var el=e.target.closest("[data-a]");if(!el)return;
+  var a=el.getAttribute("data-a"),row=el.closest("[data-id]"),id=row&&row.getAttribute("data-id");
+  if(a=="fin"){S_fin=id;renderSport()}
+  else if(a=="fcancel"){S_fin=null;renderSport()}
+  else if(a=="fsave"){var t=S.tasks.filter(function(x){return String(x.id)==id})[0];if(t)finishTask(t)}
+  else if(a=="q"){S_q=+el.getAttribute("data-q");[].forEach.call(el.parentNode.children,function(c){c.classList.toggle("on",c==el)})}
+  else if(a=="ssave")saveSleep();
+  else if(a=="addw")addWorkout();
+  else if(a=="adda")addActivity();
+  else if(a=="dl"){var lid=el.closest("[data-lid]").getAttribute("data-lid");S.log=S.log.filter(function(x){return String(x.id)!=lid});save();renderSport()}
+  else if(a=="gm"){S.goal=Math.max(0,S.goal-1);save();renderSport()}
+  else if(a=="gp"){S.goal=Math.min(14,S.goal+1);save();renderSport()}
+  else if(a=="del"||a=="fixt")onTask({target:el})
+});
+$("sv").addEventListener("change",function(e){var a=e.target.getAttribute("data-a");if(a=="mv"||a=="tm")onTask(e)});
+$("sv").addEventListener("input",function(e){var v=e.target.id&&$(e.target.id+"v");if(v&&e.target.type=="range")v.textContent=e.target.value});
+$("ex").onclick=function(){
+  S.ext=!S.ext;save();updEx();
+  setNote(S.ext?"🤖 Externe KI an: Beim nächsten Sortieren gehen Aufgabentexte, Regeln und Gewohnheiten an Claude. Du wirst einmal um Erlaubnis gefragt.":"🔒 Externe KI aus. Alles bleibt auf deinem Gerät.")
+};
+$("av").addEventListener("click",function(e){
+  var n=e.target.getAttribute("data-d");if(n==null)return;n=+n;
+  var i=S.avail.indexOf(n);
+  if(i>-1){if(S.avail.length>1)S.avail.splice(i,1)}else S.avail.push(n);
+  save();renderWeek()
+});
+function onTask(e){
+  var el=e.target,a=el.getAttribute("data-a"),id=el.closest(".t").getAttribute("data-id");
+  var t=S.tasks.filter(function(x){return String(x.id)==id})[0];if(!t)return;
+  if(a=="chk"){if(t.sport&&el.checked&&!t.done){S_fin=String(t.id);show(1);return}t.done=el.checked;if(el.checked&&S.learn)learnDay(t.text,wtOf(t),t.sport,fromIso(t.date).getDay(),1)}
+  if(a=="del")S.tasks=S.tasks.filter(function(x){return x!==t});
+  if(a=="fixt")fixTask(t);
+  if(a=="tm"){if(!el.value)return;t.time=el.value;t.tauto=false;if(S.learn&&plausible(el.value,t.sport))learnT(keyOf(t.text),wtOf(t),t.sport,fromIso(t.date).getDay(),el.value,2)}
+  if(a=="mv"){
+    if(!el.value)return;
+    var ow=fromIso(t.date).getDay();t.date=el.value;t.fixed=true;
+    if(S.learn){var k=keyOf(t.text),wd=fromIso(el.value).getDay();if(wd!=ow){learnDay(t.text,wtOf(t),t.sport,wd,2);learnDay(t.text,wtOf(t),t.sport,ow,-1)}setNote("🧠 Gemerkt: „"+esc(k)+"“ am liebsten "+DN[wd]+".")}
+  }
+  save();render()
+}
+["wk"].forEach(function(i){
+  $(i).addEventListener("click",function(e){var a=e.target.getAttribute("data-a");if(a=="del"||a=="chk"||a=="fixt")onTask(e)});
+  $(i).addEventListener("change",function(e){if(e.target.getAttribute("data-a")=="mv")onTask(e)})
+});
+$("rl").addEventListener("change",function(e){
+  var el=e.target,f=el.getAttribute("data-f");if(!f)return;
+  var row=el.closest(".rule"),i=row?+row.getAttribute("data-i"):0,n=Math.max(0,Math.min(20,Math.round(+el.value||0)));
+  if(f=="kw")S.rules[i].kw=el.value;
+  if(f=="rest")S.rules[i].rest=Math.min(5,n);
+  if(f=="def")S.defRest=Math.min(5,n);
+  if(f=="max")S.maxDay=Math.max(1,n);
+  if(f=="learn")S.learn=el.checked;
+  save()
+});
+$("rl").addEventListener("click",function(e){
+  var el=e.target,a=el.getAttribute("data-a");if(!a)return;
+  if(a=="del"){S.rules.splice(+el.closest(".rule").getAttribute("data-i"),1);save();renderRules()}
+  if(a=="addr"){S.rules.push({kw:"",rest:1});save();renderRules()}
+  if(a=="sd"){var n=+el.getAttribute("data-d"),i=S.sportDays.indexOf(n);if(i>-1){if(S.sportDays.length>1)S.sportDays.splice(i,1)}else S.sportDays.push(n);save();renderRules()}
+  if(a=="resort"){smartSort("");show(0)}
+  if(a=="reset"){S.pref={};S.tm={};save();renderRules()}
+  if(a=="bkexp"){$("bk").value=JSON.stringify(S);$("bk").select();setNote("💾 Sicherung erstellt. Text kopieren und gut aufbewahren.")}
+  if(a=="bkimp"){
+    try{var o=JSON.parse($("bk").value);if(!o||!Array.isArray(o.tasks))throw 0;for(var k in o)S[k]=o[k];save();render();renderRules();setNote("✅ Daten wiederhergestellt.")}
+    catch(x){setNote("Das war keine gültige Sicherung.",true)}
+  }
+});
+preview();render();updEx();
+if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})})}
+/* Installationshinweis */
+(function(){
+  try{
+    var sa=window.navigator.standalone||(window.matchMedia&&matchMedia("(display-mode: standalone)").matches);
+    if(sa||localStorage.getItem("planerIb"))return;
+    var ios=/iphone|ipad|ipod/i.test(navigator.userAgent);
+    $("it").textContent=ios?"Tippe unten in Safari auf das Teilen-Symbol und dann auf „Zum Home-Bildschirm“. Danach öffnet sich der Planer wie eine App.":"Öffne das Browser-Menü (⋮) und wähle „App installieren“ oder „Zum Startbildschirm hinzufügen“. Danach öffnet sich der Planer wie eine App.";
+    $("ib").hidden=false;
+    $("ix").onclick=function(){$("ib").hidden=true;try{localStorage.setItem("planerIb","1")}catch(e){}}
+  }catch(e){}
+})();
+</script>
+</body>
+</html>
